@@ -1,0 +1,226 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rescue Nexus - Feedback</title>
+
+    <!-- Bootstrap & FontAwesome -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" defer></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <style>
+        /* General Page Styling */
+        body {
+            background: #121212; /* Dark background */
+            color: white;
+            font-family: 'Poppins', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+.logo
+        {
+        width : 100px;
+        height : 80px;
+        }
+        .navbar {
+            background: rgba(0, 0, 0, 0.6) !important;
+            padding: 10px 20px;
+        }
+        .navbar-brand {
+            font-size: 1.8rem;
+            font-weight: bold;
+        }
+        .nav-link {
+            color: white !important;
+        }
+        .nav-item {
+        font-size : 1rem;
+        padding-left : 3px;
+        }
+
+        /* Feedback Container */
+        .feedback-container {
+            background: rgba(0, 0, 0, 0.85);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 0 15px rgba(255, 0, 0, 0.2); /* Subtle red glow */
+            width: 450px;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        .feedback-container:hover {
+            transform: scale(1.02);
+        }
+
+        /* Header Styling */
+        h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: white;
+        }
+
+        /* Emoji Rating */
+        .emoji-rating {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            font-size: 40px;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+
+        .emoji {
+            transition: transform 0.3s ease, color 0.3s ease;
+        }
+
+        .emoji:hover {
+            transform: scale(1.3);
+            color: var(--bs-danger);
+        }
+
+        .emoji.selected {
+            transform: scale(1.5);
+            color: var(--bs-danger);
+        }
+
+        /* Input Field */
+        textarea {
+            width: 100%;
+            height: 100px;
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 8px;
+            border: 2px solid var(--bs-danger);
+            background: black;
+            color: white;
+            font-size: 16px;
+        }
+
+        textarea:focus {
+            border-color: white;
+            outline: none;
+        }
+
+        /* Submit Button */
+        .submit-btn {
+            margin-top: 15px;
+            padding: 12px;
+            width: 100%;
+            border: none;
+            background: var(--bs-danger);
+            color: white;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
+            transition: background 0.3s ease, transform 0.2s ease;
+        }
+
+        .submit-btn:hover {
+            background: darkred;
+            transform: scale(1.05);
+        }
+
+    </style>
+</head>
+<body>
+<!-- Feedback Section -->
+<div class="feedback-container">
+    <h1 class="text-danger">How was your experience? 😊</h1>
+
+    <!-- Emoji Rating -->
+    <form id="feedbackForm" action="{% url 'submit_feedback' %}" method="post">
+        {% csrf_token %}
+        <div class="emoji-rating">
+            <span class="emoji" data-value="1">😡</span>
+            <span class="emoji" data-value="2">🙁</span>
+            <span class="emoji" data-value="3">😐</span>
+            <span class="emoji" data-value="4">🙂</span>
+            <span class="emoji" data-value="5">😍</span>
+        </div>
+
+        <!-- Hidden Input for Rating -->
+        <input type="hidden" name="rating" id="ratingInput" required>
+
+        <!-- Feedback Text -->
+        <textarea name="description" placeholder="Enter your feedback..." required></textarea>
+        <br><br>
+
+        <!-- Submit Button -->
+        <button type="submit" class="btn btn-danger mt-3 submit-btn">Submit Feedback</button>
+    </form>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const emojis = document.querySelectorAll(".emoji");
+        const ratingInput = document.createElement("input");
+        ratingInput.type = "hidden";
+        ratingInput.name = "rating";
+        ratingInput.id = "ratingInput";
+        document.getElementById("feedbackForm").appendChild(ratingInput);
+
+        // Handle emoji selection
+        emojis.forEach(emoji => {
+            emoji.addEventListener("click", function () {
+                // Remove selected class from all emojis
+                emojis.forEach(e => e.classList.remove("selected"));
+
+                // Add selected class to clicked emoji
+                this.classList.add("selected");
+
+                // Set rating value
+                ratingInput.value = this.getAttribute("data-value");
+            });
+        });
+
+        // Handle form submission
+        document.getElementById("feedbackForm").addEventListener("submit", function (event) {
+            event.preventDefault();  // Prevent default form submission
+
+            if (!ratingInput.value) {
+                alert("Please select a rating before submitting!"); // Ensure rating is selected
+                return;
+            }
+
+            fetch(this.action, {
+                method: "POST",
+                body: new FormData(this),
+            })
+            .then(response => {
+                if (response.redirected) {
+                    showThankYouPopup(response.url);
+                }
+            })
+            .catch(error => console.error("Error:", error));
+        });
+
+        // Show thank-you popup and redirect
+        function showThankYouPopup(redirectUrl) {
+            const popup = document.createElement("div");
+            popup.innerHTML = `
+                <div style="
+                    position: fixed; top: 50%; left: 50%;
+                    transform: translate(-50%, -50%);
+                    background: rgba(0, 0, 0, 0.9);
+                    color: white; padding: 20px;
+                    border-radius: 10px; text-align: center;
+                    font-size: 18px; box-shadow: 0 0 10px red;">
+                    🎉 Thank You for Your Feedback! <br> Redirecting...
+                </div>
+            `;
+            document.body.appendChild(popup);
+
+            setTimeout(() => { window.location.href = redirectUrl; }, 2000);
+        }
+    });
+</script>
+</body>
+</html>
