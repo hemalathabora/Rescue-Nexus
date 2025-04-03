@@ -1,1 +1,1 @@
-web: gunicorn disaster_app.wsgi --log-file -
+web: gunicorn disaster_management.wsgi
